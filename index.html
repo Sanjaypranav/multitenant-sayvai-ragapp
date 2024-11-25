@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot</title>
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            /* Black background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Chat container styling */
+        #chat-container {
+            width: 90%;
+            max-width: 600px;
+            background: #1c1c1c;
+            /* Dark gray for contrast */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chat-box {
+            flex-grow: 1;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #2e2e2e;
+            /* Slightly lighter dark gray */
+            border: 1px solid #4caf50;
+            /* Green border */
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            padding: 10px;
+            max-width: 70%;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            margin-bottom: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #66bb6a;
+            /* Medium green */
+            color: white;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: #a5d6a7;
+            /* Soft green */
+            color: #000000;
+            /* Black text for contrast */
+        }
+
+        /* Delete button styling outside chat box */
+        #delete-button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .delete-button {
+            background: #e57373;
+            /* Red delete button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .delete-button:hover {
+            background: #d32f2f;
+            /* Darker red on hover */
+        }
+
+        #input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #4caf50;
+            /* Green border */
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #2e2e2e;
+            /* Match chat-box background */
+            color: white;
+        }
+
+        input[type="text"]::placeholder {
+            color: #cccccc;
+            /* Lighter gray for placeholder text */
+        }
+
+        button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            background-color: #388e3c;
+            /* Dark green */
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+            /* Slightly darker green */
+        }
+
+        /* Scrollbar styling for chat box */
+        #chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: #66bb6a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chat-container">
+        <h2 style="margin: 0; text-align: center; color: #4caf50;">ChatBot</h2>
+        <div id="delete-button-container">
+            <button id="delete-button" class="delete-button" style="display: none;" onclick="clearChat()">Clear
+                Chat</button>
+        </div>
+        <div id="chat-box">
+            <!-- Greeting message added dynamically via JavaScript -->
+        </div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const userInput = document.getElementById("user-input");
+        const deleteButton = document.getElementById("delete-button");
+
+        // Initialize WebSocket
+        let socket = new WebSocket("ws://localhost:8000/ws");
+
+        // Show initial greeting message from the bot
+        function showGreeting() {
+            const greetingElement = createBotMessage("Hi there! Welcome to ChatBot. How can I assist you today?");
+            chatBox.appendChild(greetingElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Create a user message element
+        function createUserMessage(message) {
+            const userMessageElement = document.createElement("div");
+            userMessageElement.classList.add("message", "user-message");
+            userMessageElement.innerText = message;
+            return userMessageElement;
+        }
+
+        // Create a bot message element with a delete button
+        function createBotMessage(message) {
+            const botMessageElement = document.createElement("div");
+            botMessageElement.classList.add("message", "bot-message");
+            botMessageElement.innerText = message;
+
+            botMessageElement.onclick = () => {
+                // Show the delete button when a bot message is clicked
+                deleteButton.style.display = "inline-block";
+
+                deleteButton.onclick = () => {
+                    botMessageElement.remove();
+                    // Hide the delete button after deleting a message
+                    deleteButton.style.display = "none";
+
+                    // If no messages remain, hide the button again
+                    if (chatBox.children.length === 0) {
+                        deleteButton.style.display = "none";
+                    }
+                };
+            };
+
+            return botMessageElement;
+        }
+
+        // Send message when the user presses Enter
+        userInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Display bot response in chat box
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            const message = data.message;
+
+            const botMessageElement = createBotMessage(message);
+            chatBox.appendChild(botMessageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
+
+        // Log when connected to the WebSocket server
+        socket.onopen = function () {
+            console.log("Connected to the WebSocket server");
+            showGreeting(); // Display the greeting message after the connection is established
+        };
+
+        // Send user message to the server
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === "") return;
+
+            // Display user message in chat box
+            const userMessageElement = createUserMessage(message);
+            chatBox.appendChild(userMessageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Send the message to the server
+            socket.send(message);
+
+            // Clear the input field
+            userInput.value = "";
+        }
+
+        // Clear the entire chat
+        function clearChat() {
+            chatBox.innerHTML = ''; // Remove all messages
+            deleteButton.style.display = 'none'; // Hide the delete button again
+        }
+    </script>
+</body>
+
+</html>
