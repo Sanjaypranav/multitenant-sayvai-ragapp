@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "sayvai-rag"
+version = "0.0.1"
+description = "A rag app for Multitenant applications"
+authors = ["Sanjaypranav <sanjaypriya195@.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+langgraph = "^0.2.53"
+langchain-openai = "^0.2.10"
+langchain = {extras = ["llms"], version = "^0.3.9"}
+langchain-core = "^0.3.21"
+langchain-community = "^0.3.8"
+langchain-text-splitters = "^0.3.2"
+langchain-milvus = "^0.1.7"
+bs4 = "^0.0.2"
+pymilvus = {extras = ["model"], version = "^2.5.0"}
+milvus-model = "^0.2.10"
+sentence-transformers = "^3.3.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

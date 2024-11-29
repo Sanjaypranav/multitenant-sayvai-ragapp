@@ -1,0 +1,8 @@
+volumes/milvus
+user.yaml
+embedEtcd.yaml
+standalone_embed.sh
+.env
+volumes
+docs
+sayvai.db
