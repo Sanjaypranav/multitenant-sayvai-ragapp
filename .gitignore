@@ -6,3 +6,4 @@ standalone_embed.sh
 volumes
 docs
 sayvai.db
+__pycache__

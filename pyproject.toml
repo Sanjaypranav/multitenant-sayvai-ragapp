@@ -18,6 +18,7 @@ bs4 = "^0.0.2"
 pymilvus = {extras = ["model"], version = "^2.5.0"}
 milvus-model = "^0.2.10"
 sentence-transformers = "^3.3.1"
+fastapi = {extras = ["all"], version = "^0.115.5"}
 
 
 [build-system]
