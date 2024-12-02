@@ -7,6 +7,8 @@ from sayvai_rag.config import create_vector_store
 from sayvai_rag.search import search_vector_store
 from sayvai_rag.milvus_vector_store import create_user_store
 from sayvai_rag.text_splitter import load_and_split_pdf
+from typing import TypedDict
+from sayvai_rag.utils import format_docs
 
 # Load environment variables
 load_dotenv()
@@ -31,7 +33,13 @@ class Config(BaseModel):
 class CreateConfig(BaseModel):
     user_name: str
     doc_name: str
+    
+class State(TypedDict):
+    question: str
+    collection_name: str
+    docs_name: str
 
+     
 # Root route
 @app.get("/")
 def root():
