@@ -2,7 +2,7 @@
 
 from langchain.embeddings.base import Embeddings  # Or your embedding model import
 from pymilvus import Milvus, CollectionSchema, FieldSchema, DataType
-from langchain.vectorstores import Milvus
+from langchain_milvus import Milvus
 from typing import List
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import asyncio
@@ -13,7 +13,7 @@ def create_user_store(embeddings: Embeddings,
                         collection_name: str, 
                         document_name: str, 
                         drop_old: bool = False,
-                        documents: List = None) -> Milvus:
+                        documents = None) -> Milvus:
     # Initialize the Milvus client
     """
     create a vector store

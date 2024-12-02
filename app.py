@@ -7,13 +7,15 @@ from sayvai_rag.config import create_vector_store
 from sayvai_rag.search import search_vector_store
 from sayvai_rag.milvus_vector_store import create_user_store
 from sayvai_rag.text_splitter import load_and_split_pdf
+from typing import TypedDict
+from sayvai_rag.utils import format_docs
 
 # Load environment variables
 load_dotenv()
 
 # Initialize OpenAI embeddings
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-os.environ["MILVUS_URI"] = "test.db"
+os.environ["MILVUS_URI"] = "sayvai.db"
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -31,7 +33,13 @@ class Config(BaseModel):
 class CreateConfig(BaseModel):
     user_name: str
     doc_name: str
+    
+class State(TypedDict):
+    question: str
+    collection_name: str
+    docs_name: str
 
+     
 # Root route
 @app.get("/")
 def root():
@@ -46,7 +54,8 @@ def chat(config: Config):
         collection_name=config.user_name,
         document_name=config.doc_name
     )
-    return search_vector_store(vector_store, config.query)
+    index = {"user_name": config.user_name, "doc_name": config.doc_name}
+    return search_vector_store(vector_store, config.query, index=index)
 
 # Route for uploading and creating the vector store from a PDF
 @app.post("/create")
@@ -71,17 +80,17 @@ def insert(
         documents = load_and_split_pdf(file_path)  # Ensure this function returns an iterable (e.g., list of chunks)
 
         # Create vector store for the user
-        vector_store = create_vector_store(
+        vector_store = create_user_store(
             embeddings,
             connection_args={"uri": os.environ["MILVUS_URI"]},
             collection_name=user_name,
             document_name=doc_name,
-            documents=list(documents)  # Convert to list if necessary
+            documents=documents  # Convert to list if necessary
         )
 
         # Optional: Test the vector store by performing a search after insertion
-        search_result = search_vector_store(vector_store, "what is the twin city of Kovai")
-        print(search_result)
+        # search_result = search_vector_store(vector_store, "what is the twin city of Kovai")
+        # print(search_result)
 
         return {"message": "Inserted successfully and vector store created."}
 
