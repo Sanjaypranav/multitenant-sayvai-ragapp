@@ -10,7 +10,7 @@ from sayvai_rag.search import search_vector_store
 load_dotenv()
 
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
-os.environ["MILVUS_URI"] = "../sayvai.db"
+os.environ["MILVUS_URI"] = "sayvai.db"
 
 app = FastAPI(
     title="sayvai-rag-backend",
@@ -31,11 +31,8 @@ async def root():
 @app.post("/chat/")
 async def chat(config: Config):
     vector_store = create_vector_store(embeddings,
-                                       connection_args= {"ui": os.environ["MILVUS_URI"]},
+                                       connection_args= {"uri": os.environ["MILVUS_URI"]},
                                        collection_name= config.user_name, 
                                        document_name = config.doc_name
                                        )
     return search_vector_store(vector_store, config.query)
-    
-
-
