@@ -7,3 +7,4 @@ volumes
 docs
 sayvai.db
 __pycache__
+*.bat
