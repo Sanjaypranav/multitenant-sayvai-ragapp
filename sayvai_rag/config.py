@@ -26,8 +26,8 @@ def create_vector_store(embeddings : Embeddings,
     """
     if "MILVUS_URI" not in os.environ:
         os.environ["MILVUS_URI"] = connection_args
-    if "MILVUS_COLLECTION" not in os.environ:
-        os.environ["MILVUS_COLLECTION"] = collection_name
+    # if "MILVUS_COLLECTION" not in os.environ:
+    #     os.environ["MILVUS_COLLECTION"] = collection_name
     vector_store = Milvus(
         embedding_function=embeddings,
         connection_args=connection_args,

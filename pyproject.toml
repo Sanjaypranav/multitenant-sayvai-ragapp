@@ -20,6 +20,7 @@ milvus-model = "^0.2.10"
 sentence-transformers = "^3.3.1"
 fastapi = {extras = ["all"], version = "^0.115.5"}
 pypdf = "^5.1.0"
+milvus-lite = "^2.4.10"
 
 
 [build-system]
