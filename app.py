@@ -55,7 +55,7 @@ def chat(config: Config):
         document_name=config.doc_name
     )
     index = {"user_name": config.user_name, "doc_name": config.doc_name}
-    return search_vector_store(vector_store, config.query, index=index)
+    return format_docs(search_vector_store(vector_store, config.query, index=index))
 
 # Route for uploading and creating the vector store from a PDF
 @app.post("/create")
@@ -87,6 +87,7 @@ def insert(
             document_name=doc_name,
             documents=documents  # Convert to list if necessary
         )
+        os.remove(file_path)
 
         # Optional: Test the vector store by performing a search after insertion
         # search_result = search_vector_store(vector_store, "what is the twin city of Kovai")
