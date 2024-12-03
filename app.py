@@ -9,6 +9,7 @@ from sayvai_rag.milvus_vector_store import create_user_store
 from sayvai_rag.text_splitter import load_and_split_pdf
 from typing import TypedDict
 from sayvai_rag.utils import format_docs
+from fastapi.responses import StreamingResponse
 
 # Load environment variables
 load_dotenv()
@@ -33,13 +34,26 @@ class Config(BaseModel):
 class CreateConfig(BaseModel):
     user_name: str
     doc_name: str
-    
+
 class State(TypedDict):
     question: str
     collection_name: str
     docs_name: str
 
-     
+global graph_build, graph_status
+graph_build = None
+graph_status = False
+
+
+def build_graph_rag(collection_name):
+    global graph_build, graph_status
+    os.environ["USER_NAME"] = collection_name
+    from sayvai_rag.agent import build_graph
+    graph_build = build_graph()
+    graph_status = True
+    return "Graph is built"
+
+
 # Root route
 @app.get("/")
 def root():
@@ -56,6 +70,18 @@ def chat(config: Config):
     )
     index = {"user_name": config.user_name, "doc_name": config.doc_name}
     return format_docs(search_vector_store(vector_store, config.query, index=index))
+
+@app.post("/chatbot")
+def chatbot(config: Config):
+    if not graph_status:
+        build_graph_rag(config.user_name)
+        if graph_status:
+            pass
+        else:
+            raise HTTPException(status_code=500, detail="Failed to build graph.")
+    from sayvai_rag.agent import chatter
+    return StreamingResponse(chatter(graph=graph_build, input_message=config.query))
+
 
 # Route for uploading and creating the vector store from a PDF
 @app.post("/create")
@@ -89,12 +115,7 @@ def insert(
         )
         os.remove(file_path)
 
-        # Optional: Test the vector store by performing a search after insertion
-        # search_result = search_vector_store(vector_store, "what is the twin city of Kovai")
-        # print(search_result)
-
         return {"message": "Inserted successfully and vector store created."}
 
     except Exception as e:
-        # Improved error handling with detailed traceback
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
