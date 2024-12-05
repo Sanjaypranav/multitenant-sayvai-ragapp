@@ -1,1 +1,12 @@
+volumes/milvus
+user.yaml
+embedEtcd.yaml
+standalone_embed.sh
 .env
+volumes
+docs
+sayvai.db
+__pycache__
+zilliz-cloud-Free-01-username-password.txt
+*.bat
+.sayvai.db.lock
