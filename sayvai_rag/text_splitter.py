@@ -1,12 +1,31 @@
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import CSVLoader, TextLoader, PyPDFLoader, JSONLoader, UnstructuredHTMLLoader, UnstructuredMarkdownLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+import os
 # Function to load and split the PDF
-def load_and_split_pdf(file_path, chunk_size=1024, chunk_overlap=10):
-    # Initialize the PDF loader with the given file path
-    loader = PyPDFLoader(file_path)
+def load_and_split_files(file_path, chunk_size=1024, chunk_overlap=10):
+
+    file_extension = os.path.splitext(file_path)[1]
+
+    if file_extension == ".txt":
+        loader = TextLoader(file_path)
+
+    elif file_extension == ".pdf":
+        loader = PyPDFLoader(file_path)
+
+    elif file_extension == ".json":
+        loader = JSONLoader(file_path)
+
+    elif file_extension == ".html":
+        loader = UnstructuredHTMLLoader(file_path)
+
+    elif file_extension == ".md":
+        loader = UnstructuredMarkdownLoader(file_path)
+
+    else :
+        loader = CSVLoader(file_path)
     
-    # Load the PDF synchronously using .load() instead of .alazy_load()
+    
+    # Load the File synchronously using .load() instead of .alazy_load()
     pages = loader.load()
 
     # Initialize the text splitter with the given parameters
