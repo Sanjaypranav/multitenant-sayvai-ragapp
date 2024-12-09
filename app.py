@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sayvai_rag.config import create_vector_store
 from sayvai_rag.search import search_vector_store
 from sayvai_rag.milvus_vector_store import create_user_store
-from sayvai_rag.text_splitter import load_and_split_pdf
+from sayvai_rag.text_splitter import load_and_split_files
 from typing import TypedDict
 from sayvai_rag.utils import format_docs
 from fastapi.responses import StreamingResponse
@@ -27,8 +27,8 @@ app = FastAPI(
 
 # Pydantic models for input validation
 class Config(BaseModel):
-    query: str
-    user_name: str
+    query: str ='What is this document about'
+    user_name: str 
     doc_name: str | None = None
 
 class CreateConfig(BaseModel):
@@ -60,25 +60,28 @@ def root():
     return {"message": "API working. Welcome to the Sayvai rag app."}
 
 # Chat route for querying vector store
-@app.post("/chat")
-def chat(config: Config):
-    vector_store = create_vector_store(
-        embeddings,
-        connection_args={"uri": os.environ["MILVUS_URI"]},
-        collection_name=config.user_name,
-        document_name=config.doc_name
-    )
-    index = {"user_name": config.user_name, "doc_name": config.doc_name}
-    return format_docs(search_vector_store(vector_store, config.query, index=index))
+# @app.post("/chat")
+# def chat(config: Config):
+#     vector_store = create_vector_store(
+#         embeddings,
+#         connection_args={"uri": os.environ["MILVUS_URI"]},
+#         collection_name=config.user_name,
+#         document_name=config.doc_name
+#     )
+#     index = {"user_name": config.user_name, "doc_name": config.doc_name}
+#     return format_docs(search_vector_store(vector_store, config.query, index=index))
 
 @app.post("/chatbot")
 def chatbot(config: Config):
-    if not graph_status:
-        build_graph_rag(config.user_name)
-        if graph_status:
-            pass
-        else:
-            raise HTTPException(status_code=500, detail="Failed to build graph.")
+    # if not graph_status:
+    #     build_graph_rag(config.user_name)
+    #     if graph_status:
+    #         pass
+    #     else:
+    #         raise HTTPException(status_code=500, detail="Failed to build graph.")
+    os.environ["USER_NAME"] = config.user_name
+    from sayvai_rag.agent import build_graph
+    graph_build = build_graph(config.user_name)
     from sayvai_rag.agent import chatter
     return StreamingResponse(chatter(graph=graph_build, input_message=config.query))
 
@@ -93,9 +96,10 @@ def insert(
     try:
         # Ensure documents directory exists
         os.makedirs("documents", exist_ok=True)
+        file_extension = os.path.splitext(file.filename)[1]
 
         # Save the uploaded PDF synchronously
-        file_path = f"documents/{doc_name}.pdf"
+        file_path = f"documents/{doc_name}{file_extension}"
         with open(file_path, "wb") as f:
             f.write(file.file.read())  # Read and write file contents synchronously
 
@@ -103,7 +107,7 @@ def insert(
         file.file.close()
 
         # Split the PDF into chunks
-        documents = load_and_split_pdf(file_path)  # Ensure this function returns an iterable (e.g., list of chunks)
+        documents = load_and_split_files(file_path)  # Ensure this function returns an iterable (e.g., list of chunks)
 
         # Create vector store for the user
         vector_store = create_user_store(
