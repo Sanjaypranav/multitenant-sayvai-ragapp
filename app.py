@@ -81,7 +81,7 @@ def chatbot(config: Config):
     #         raise HTTPException(status_code=500, detail="Failed to build graph.")
     os.environ["USER_NAME"] = config.user_name
     from sayvai_rag.agent import build_graph
-    graph_build = build_graph(config.user_name)
+    graph_build = build_graph()
     from sayvai_rag.agent import chatter
     return StreamingResponse(chatter(graph=graph_build, input_message=config.query))
 
