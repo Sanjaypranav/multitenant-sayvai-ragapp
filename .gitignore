@@ -10,3 +10,4 @@ __pycache__
 zilliz-cloud-Free-01-username-password.txt
 *.bat
 .sayvai.db.lock
+.idea
