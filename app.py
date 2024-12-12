@@ -40,18 +40,18 @@ class State(TypedDict):
     collection_name: str
     docs_name: str
 
-global graph_build, graph_status
-graph_build = None
-graph_status = False
+# global graph_build, graph_status
+# graph_build = None
+# graph_status = False
 
 
-def build_graph_rag(collection_name):
-    global graph_build, graph_status
-    os.environ["USER_NAME"] = collection_name
-    from sayvai_rag.agent import build_graph
-    graph_build = build_graph()
-    graph_status = True
-    return "Graph is built"
+# def build_graph_rag(collection_name):
+#     os.environ["USER_NAME"] = collection_name
+#     from sayvai_rag.agent import SayvaiRagAgent
+#     agent = SayvaiRagAgent(model="gpt-4o-mini", config={})
+#     graph_build = agent.build_graph()
+#     graph_status = True
+#     return "Graph is built"
 
 
 # Root route
@@ -80,10 +80,10 @@ def chatbot(config: Config):
     #     else:
     #         raise HTTPException(status_code=500, detail="Failed to build graph.")
     os.environ["USER_NAME"] = config.user_name
-    from sayvai_rag.agent import build_graph
-    graph_build = build_graph()
-    from sayvai_rag.agent import chatter
-    return StreamingResponse(chatter(graph=graph_build, input_message=config.query))
+    from sayvai_rag.agent import SayvaiRagAgent
+    agent = SayvaiRagAgent(model="groq-llama3-groq-8b-8192-tool-use-preview", config={"thread_id" : "1"})
+    graph_build = agent.build_graph()
+    return StreamingResponse(agent.chatter(graph=graph_build, input_message=config.query))
 
 
 # Route for uploading and creating the vector store from a PDF

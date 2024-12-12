@@ -21,6 +21,8 @@ sentence-transformers = "^3.3.1"
 fastapi = {extras = ["all"], version = "^0.115.5"}
 pypdf = "^5.1.0"
 milvus-lite = "^2.4.10"
+langchain-groq = "^0.2.1"
+langchain-ollama = "^0.2.1"
 
 
 [build-system]
