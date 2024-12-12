@@ -1,7 +1,8 @@
 # Milvus connection setup
 import os
 from langchain_milvus import Milvus
-from langchain.embeddings.base import Embeddings 
+from langchain.embeddings.base import Embeddings
+from typing import Dict
 
 # vector_store = Milvus(
 #     embedding_function=embeddings,
@@ -11,7 +12,7 @@ from langchain.embeddings.base import Embeddings
 # )
 
 def create_vector_store(embeddings : Embeddings, 
-                        connection_args: str = None, 
+                        connection_args: Dict = None,
                         collection_name: str = None, 
                         document_name: str = None,
                         drop_old : bool =False) -> Milvus:
