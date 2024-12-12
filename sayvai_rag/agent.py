@@ -15,8 +15,14 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 llm = ChatOpenAI(model="gpt-4o-mini")
 # Define prompt for question-answering
 prompt = PromptTemplate(
-    template="Answer the user's question as best as possible. If the user asks about the document, retrieve it using the retrieval tool.\n{context}\n{question}",
-    input_variables=["context", "question"]
+    template=(
+            "Answer the user's question as best as possible. If the user asks about the document, retrieve it using the retrieval tool. "
+            "If the user asks a question unrelated to the document or the information "
+            "is not available in the document, respond with 'I'm not allowed to talk about it.'\n"
+            "{context}\n"
+            "{question}"
+        ),
+        input_variables=["context", "question"]
 )
 
 vector_store = create_vector_store(
