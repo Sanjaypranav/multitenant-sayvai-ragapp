@@ -30,6 +30,7 @@ class Config(BaseModel):
     query: str ='What is this document about'
     user_name: str 
     doc_name: str | None = None
+    thread_id: str = "1"
 
 class CreateConfig(BaseModel):
     user_name: str
@@ -40,18 +41,18 @@ class State(TypedDict):
     collection_name: str
     docs_name: str
 
-global graph_build, graph_status
-graph_build = None
-graph_status = False
+# global graph_build, graph_status
+# graph_build = None
+# graph_status = False
 
 
-def build_graph_rag(collection_name):
-    global graph_build, graph_status
-    os.environ["USER_NAME"] = collection_name
-    from sayvai_rag.agent import build_graph
-    graph_build = build_graph()
-    graph_status = True
-    return "Graph is built"
+# def build_graph_rag(collection_name):
+#     os.environ["USER_NAME"] = collection_name
+#     from sayvai_rag.agent import SayvaiRagAgent
+#     agent = SayvaiRagAgent(model="gpt-4o-mini", config={})
+#     graph_build = agent.build_graph()
+#     graph_status = True
+#     return "Graph is built"
 
 
 # Root route
@@ -71,6 +72,7 @@ def root():
 #     index = {"user_name": config.user_name, "doc_name": config.doc_name}
 #     return format_docs(search_vector_store(vector_store, config.query, index=index))
 
+
 @app.post("/chatbot")
 def chatbot(config: Config):
     # if not graph_status:
@@ -79,11 +81,12 @@ def chatbot(config: Config):
     #         pass
     #     else:
     #         raise HTTPException(status_code=500, detail="Failed to build graph.")
+    # global i
     os.environ["USER_NAME"] = config.user_name
-    from sayvai_rag.agent import build_graph
-    graph_build = build_graph()
-    from sayvai_rag.agent import chatter
-    return StreamingResponse(chatter(graph=graph_build, input_message=config.query))
+    from sayvai_rag.agent import SayvaiRagAgent
+    agent = SayvaiRagAgent(model="gpt-4o-mini")
+    graph_build = agent.build_graph()
+    return StreamingResponse(agent.chatter(graph=graph_build, input_message=config.query, config={"thread_id": config.thread_id}))
 
 
 # Route for uploading and creating the vector store from a PDF
