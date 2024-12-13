@@ -1,3 +1,5 @@
+from typing import Dict
+
 from langchain import hub
 from langchain_core.documents import Document
 from langgraph.graph import START, StateGraph
@@ -18,7 +20,7 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 # llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
 # Define prompt for question-answering
-prompt = PromptTemplate(
+rompt = PromptTemplate(
     template=(
         "You are an assistant that answers questions strictly based on a provided document. "
         "If the user's question relates to the document, use the document to provide an answer. "
@@ -46,9 +48,8 @@ class State(TypedDict):
 
 
 class SayvaiRagAgent:
-    def __init__(self, model: str, config: dict):
+    def __init__(self, model: str):
         self.llm = self.get_llm(model)
-        self.config = config
 
     def get_llm(self, model) -> BaseLLM:
         """
@@ -84,11 +85,11 @@ class SayvaiRagAgent:
         graph = graph_builder.compile(checkpointer=memory, interrupt_after=["generate"])
         return graph
 
-    def chatter(self, graph, input_message):
+    def chatter(self, graph, input_message: str, config: Dict = {"thread_id" : "1"}):
         for message, metadata in graph.stream(
                 {"question": input_message},
                 stream_mode="messages",
-                config=self.config
+                config=config
         ):
             if metadata["langgraph_node"] == "generate":
                 yield message.content

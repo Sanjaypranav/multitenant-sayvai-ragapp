@@ -30,6 +30,7 @@ class Config(BaseModel):
     query: str ='What is this document about'
     user_name: str 
     doc_name: str | None = None
+    thread_id: str = "1"
 
 class CreateConfig(BaseModel):
     user_name: str
@@ -71,6 +72,7 @@ def root():
 #     index = {"user_name": config.user_name, "doc_name": config.doc_name}
 #     return format_docs(search_vector_store(vector_store, config.query, index=index))
 
+
 @app.post("/chatbot")
 def chatbot(config: Config):
     # if not graph_status:
@@ -79,11 +81,12 @@ def chatbot(config: Config):
     #         pass
     #     else:
     #         raise HTTPException(status_code=500, detail="Failed to build graph.")
+    # global i
     os.environ["USER_NAME"] = config.user_name
     from sayvai_rag.agent import SayvaiRagAgent
-    agent = SayvaiRagAgent(model="groq-llama3-groq-8b-8192-tool-use-preview", config={"thread_id" : "1"})
+    agent = SayvaiRagAgent(model="gpt-4o-mini")
     graph_build = agent.build_graph()
-    return StreamingResponse(agent.chatter(graph=graph_build, input_message=config.query))
+    return StreamingResponse(agent.chatter(graph=graph_build, input_message=config.query, config={"thread_id": config.thread_id}))
 
 
 # Route for uploading and creating the vector store from a PDF
