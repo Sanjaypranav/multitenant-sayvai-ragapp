@@ -13,6 +13,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain.llms import BaseLLM
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
+from sayvai_rag.utils import format_docs
 
 
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
@@ -20,24 +21,27 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 # llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
 # Define prompt for question-answering
-rompt = PromptTemplate(
-    template=(
-        "You are an assistant that answers questions strictly based on a provided document. "
-        "If the user's question relates to the document, use the document to provide an answer. "
-        "If the user's question does not relate to the document or if the required information is not in the document, "
-        "respond only with: 'I'm not allowed to talk about it.'\n\n"
-        "Context:\n{context}\n\n"
-        "Question:\n{question}"
-    ),
-    input_variables=["context", "question"]
-)
+PROMPT_TEMPLATE = """
+Human: You are an AI assistant, and provides answers to questions by using fact based and statistical information when possible.
+Use the following pieces of information to provide a concise answer to the question enclosed in <question> tags.
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+<context>
+{context}
+</context>
 
-vector_store = create_vector_store(
-    embeddings,
-    connection_args={"uri": os.environ["MILVUS_URI"]},
-    collection_name=os.environ['USER_NAME'],
-    document_name=None
+<question>
+{question}
+</question>
+
+The response should be specific and use statistics or numbers when possible.
+
+Assistant:"""
+
+# Create a PromptTemplate instance with the defined template and input variables
+prompt = PromptTemplate(
+    template=PROMPT_TEMPLATE, input_variables=["context", "question"]
 )
+# Con
 
 
 # Define state for application
@@ -50,6 +54,7 @@ class State(TypedDict):
 class SayvaiRagAgent:
     def __init__(self, model: str):
         self.llm = self.get_llm(model)
+        self.vector_store = None
 
     def get_llm(self, model) -> BaseLLM:
         """
@@ -66,10 +71,17 @@ class SayvaiRagAgent:
             return ChatGroq(model=model[5:], streaming=True)
         if model[:6] == "ollama":
             return ChatOllama(model=model[7:], streaming=True)
-
-
+        
+    def init_vector_store(self, collection_name: str):
+        self.vector_store = create_vector_store(
+        embeddings,
+        connection_args={"uri": os.environ["MILVUS_URI"]},
+        collection_name=collection_name,
+        document_name=None
+        )
+    
     def retrieve(self, state: State):
-        retrieved_docs = vector_store.similarity_search(state["question"])
+        retrieved_docs = self.vector_store.similarity_search(state["question"])
         return {"context": retrieved_docs}
 
     def generate(self, state: State):
@@ -78,15 +90,15 @@ class SayvaiRagAgent:
         response = self.llm.invoke(messages)
         return {"answer": response.content}
 
-    def build_graph(self):
+    def build_graph(self, collection_name):
+        self.init_vector_store(collection_name)
         memory = MemorySaver()
         graph_builder = StateGraph(State).add_sequence([self.retrieve, self.generate])
         graph_builder.add_edge(START, "retrieve")
-        graph = graph_builder.compile(checkpointer=memory, interrupt_after=["generate"])
-        return graph
+        self.graph = graph_builder.compile(checkpointer=memory, interrupt_after=["generate"])
 
-    def chatter(self, graph, input_message: str, config: Dict = {"thread_id" : "1"}):
-        for message, metadata in graph.stream(
+    def chatter(self, input_message: str, config: Dict = {"thread_id" : "1"}):
+        for message, metadata in self.graph.stream(
                 {"question": input_message},
                 stream_mode="messages",
                 config=config

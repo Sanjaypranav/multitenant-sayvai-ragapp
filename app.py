@@ -28,7 +28,7 @@ app = FastAPI(
 # Pydantic models for input validation
 class Config(BaseModel):
     query: str ='What is this document about'
-    user_name: str 
+    user_name: str = "yoko"
     doc_name: str | None = None
     thread_id: str = "1"
 
@@ -60,17 +60,7 @@ class State(TypedDict):
 def root():
     return {"message": "API working. Welcome to the Sayvai rag app."}
 
-# Chat route for querying vector store
-# @app.post("/chat")
-# def chat(config: Config):
-#     vector_store = create_vector_store(
-#         embeddings,
-#         connection_args={"uri": os.environ["MILVUS_URI"]},
-#         collection_name=config.user_name,
-#         document_name=config.doc_name
-#     )
-#     index = {"user_name": config.user_name, "doc_name": config.doc_name}
-#     return format_docs(search_vector_store(vector_store, config.query, index=index))
+
 
 
 @app.post("/chatbot")
@@ -85,8 +75,8 @@ def chatbot(config: Config):
     os.environ["USER_NAME"] = config.user_name
     from sayvai_rag.agent import SayvaiRagAgent
     agent = SayvaiRagAgent(model="gpt-4o-mini")
-    graph_build = agent.build_graph()
-    return StreamingResponse(agent.chatter(graph=graph_build, input_message=config.query, config={"thread_id": config.thread_id}))
+    agent.build_graph(collection_name=config.user_name)
+    return StreamingResponse(agent.chatter(input_message=config.query, config={"thread_id": config.thread_id}))
 
 
 # Route for uploading and creating the vector store from a PDF
