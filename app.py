@@ -72,7 +72,7 @@ def chatbot(config: Config):
     #     else:
     #         raise HTTPException(status_code=500, detail="Failed to build graph.")
     # global i
-    os.environ["USER_NAME"] = config.user_name
+    # os.environ["USER_NAME"] = config.user_name
     from sayvai_rag.agent import SayvaiRagAgent
     agent = SayvaiRagAgent(model="gpt-4o-mini")
     agent.build_graph(collection_name=config.user_name)
