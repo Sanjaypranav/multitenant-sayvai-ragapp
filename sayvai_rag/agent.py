@@ -33,7 +33,8 @@ If you don't know the answer, just say that you don't know, don't try to make up
 {question}
 </question>
 
-The response should be specific and use statistics or numbers when possible.
+The response should be only related to the information provided in the context.
+not to the general knowledge or personal opinions.
 
 Assistant:"""
 
