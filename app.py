@@ -10,6 +10,7 @@ from sayvai_rag.text_splitter import load_and_split_files
 from typing import TypedDict
 from sayvai_rag.utils import format_docs
 from fastapi.responses import StreamingResponse
+from sayvai_rag.agent import SayvaiRagAgent
 
 # Load environment variables
 load_dotenv()
@@ -41,18 +42,6 @@ class State(TypedDict):
     collection_name: str
     docs_name: str
 
-# global graph_build, graph_status
-# graph_build = None
-# graph_status = False
-
-
-# def build_graph_rag(collection_name):
-#     os.environ["USER_NAME"] = collection_name
-#     from sayvai_rag.agent import SayvaiRagAgent
-#     agent = SayvaiRagAgent(model="gpt-4o-mini", config={})
-#     graph_build = agent.build_graph()
-#     graph_status = True
-#     return "Graph is built"
 
 
 # Root route
@@ -60,23 +49,16 @@ class State(TypedDict):
 def root():
     return {"message": "API working. Welcome to the Sayvai rag app."}
 
-
+agent = SayvaiRagAgent(model="gpt-4o-mini")
+agent.build_graph(collection_name="dtcp")
 
 
 @app.post("/chatbot")
 def chatbot(config: Config):
-    # if not graph_status:
-    #     build_graph_rag(config.user_name)
-    #     if graph_status:
-    #         pass
-    #     else:
-    #         raise HTTPException(status_code=500, detail="Failed to build graph.")
-    # global i
-    # os.environ["USER_NAME"] = config.user_name
-    from sayvai_rag.agent import SayvaiRagAgent
-    agent = SayvaiRagAgent(model="gpt-4o-mini")
-    agent.build_graph(collection_name=config.user_name)
+    # agent = SayvaiRagAgent(model="gpt-4o-mini")
+    # agent.build_graph(collection_name=config.user_name)
     return StreamingResponse(agent.chatter(input_message=config.query, config={"thread_id": config.thread_id}))
+    # return StreamingResponse("Hello")
 
 
 # Route for uploading and creating the vector store from a PDF

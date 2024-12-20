@@ -34,7 +34,7 @@ If you don't know the answer, just say that you don't know, don't try to make up
 </question>
 
 The response should be only related to the information provided in the context.
-not to the general knowledge or personal opinions.
+not to the general knowledge or personal opinions. if user greets you, you should greet back.
 
 Assistant:"""
 
